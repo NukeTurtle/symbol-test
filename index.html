@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Test zamenjave simbolov</title>
+</head>
+<body>
+    <h1>Test zamenjave simbolov</h1>
+    <div id="instructions">
+        <form id="userForm">
+            <p>Navodila: Ujemite simbol s pravilno številko. Imate 90 sekund, da dokončate čim več. Pritisnite ustrezni gumb (1, 2 ali 3), da izberete svoj odgovor.</p>
+            <button type="submit">Začni</button>
+        </form>
+    </div>
+
+    <div id="testArea" class="hidden">
+        <div class="symbol-stimulus-container">
+            <div class="symbol-stimulus" id="symbolStimulus">♦</div>
+        </div>
+
+        <div class="grid-container" id="symbolNumberTable">
+            <!-- Simboli in številke bodo vstavljeni tukaj z JavaScript -->
+        </div>
+
+        <div class="button-container">
+            <button onclick="checkAnswer(1)">1</button>
+            <button onclick="checkAnswer(2)">2</button>
+            <button onclick="checkAnswer(3)">3</button>
+        </div>
+
+        <div id="score">Rezultat: 0</div>
+        <div id="timer">Preostali čas: 90s</div>
+    </div>
+
+    <script>
+        const allSymbols = ['♦', '♥', '♣', '♠', '★', '☀', '☂', '☁', '☃', '☾', '☼', '☽', '☿', '♀', '♂', '♁', '♆', '♇', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+        let symbols = [];
+        const correctNumbers = [1, 2, 3, 1, 2, 3, 1, 2, 3];
+        let currentSymbolIndex = -1;
+        let score = 0;
+        let timeLeft = 10;
+        let timer;
+        let results = [];
+        let startTime;
+
+        document.getElementById('userForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            startTest();
+        });
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateSymbols() {
+            symbols = shuffle(allSymbols.slice()).slice(0, 9);
+        }
+
+        function populateSymbolNumberTable() {
+            const table = document.getElementById('symbolNumberTable');
+            table.innerHTML = '';
+            symbols.forEach((symbol) => {
+                table.innerHTML += `<div class="symbol">${symbol}</div>`;
+            });
+            correctNumbers.forEach((number) => {
+                table.innerHTML += `<div class="number">${number}</div>`;
+            });
+        }
+
+        function startTest() {
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('testArea').classList.remove('hidden');
+            generateSymbols();
+            populateSymbolNumberTable();
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Preostali čas: ${timeLeft}s`;
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    showResults();
+                }
+            }, 1000);
+            nextSymbol();
+        }
+
+        function nextSymbol() {
+            let newSymbolIndex;
+            do {
+                newSymbolIndex = Math.floor(Math.random() * symbols.length);
+            } while (newSymbolIndex === currentSymbolIndex);
+            currentSymbolIndex = newSymbolIndex;
+
+            const symbolStimulus = document.getElementById('symbolStimulus');
+            symbolStimulus.style.opacity = 0;
+
+            setTimeout(() => {
+                symbolStimulus.innerText = symbols[currentSymbolIndex];
+                symbolStimulus.style.opacity = 1;
+                startTime = Date.now();
+            }, 300);
+        }
+
+        function checkAnswer(number) {
+            const endTime = Date.now();
+            const reactionTime = endTime - startTime;
+            const correct = number === correctNumbers[currentSymbolIndex];
+            results.push({
+                symbol: symbols[currentSymbolIndex],
+                selectedNumber: number,
+                correct: correct,
+                reactionTime: reactionTime
+            });
+            if (correct) {
+                score++;
+                document.getElementById('score').innerText = `Rezultat: ${score}`;
+            }
+            nextSymbol();
+        }
+
+
+        // document.getElementById('save').onclick = function() {
+        //     let textToSave = JSON.stringify(json),
+        //     filename = 'file.txt',
+        //     blob = new Blob([textToSave], {type: "text/plain;charset=utf-8"});
+
+        //     saveAs(blob, filename);
+        // }
+
+        function showResults() {
+            const totalCorrect = results.filter(result => result.correct).length;
+            const totalWrong = results.length - totalCorrect;
+            const averageReactionTime = results.reduce((acc, result) => acc + result.reactionTime, 0) / results.length;
+            const correctRatio = totalCorrect / results.length;
+
+            const resultPage = `
+                <h1>Rezultati testa</h1>
+                <table>
+                    <tr>
+                        <th>Simbol</th>
+                        <th>Izbrana številka</th>
+                        <th>Pravilno</th>
+                        <th>Reakcijski čas (ms)</th>
+                    </tr>
+                    ${results.map(result => `
+                        <tr>
+                            <td>${result.symbol}</td>
+                            <td>${result.selectedNumber}</td>
+                            <td class="${result.correct ? 'correct' : 'incorrect'}">${result.correct ? 'Pravilno' : 'Nepravilno'}</td>
+                            <td>${result.reactionTime}</td>
+                        </tr>
+                    `).join('')}
+                    <tr>
+                        <th colspan="2">Skupaj</th>
+                        <th>${totalCorrect} / ${results.length} (${(correctRatio * 100).toFixed(2)}%)</th>
+                        <th>${averageReactionTime.toFixed(2)}</th>
+                    </tr>
+                </table>
+                <button onclick="restartTest()">Ponovni začetek</button>
+            `;
+
+            const jsonString = JSON.stringify(results, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '../results.json';
+            a.click();
+
+            URL.revokeObjectURL(a.href);
+        }
+
+        function restartTest() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
