@@ -57,13 +57,14 @@
         const lastName = document.querySelector("input[name=priimek]");
         const age = document.querySelector("input[name=starost]");
         let results = [];
+        let userData = [];
         let startTime;
 
         document.getElementById('userForm').addEventListener('submit', function(event) {
             event.preventDefault();
             if(name.value != "" && lastName.value != "" && age.value != "") {
                 error.innerText = "";
-                results.push({"ime" : name.value, "priimek" : lastName.value, "starost" : age.value});
+                userData.push({"ime" : name.value, "priimek" : lastName.value, "starost" : age.value});
                 startTest();
             } else {
                 error.innerText = "Prosimo vnesite vse podatke."
@@ -158,6 +159,7 @@
                         <th>Pravilno</th>
                         <th>Reakcijski čas (ms)</th>
                     </tr>
+                    ${console.log(results)}
                     ${results.map(result => `
                         <tr>
                             <td>${result.symbol}</td>
@@ -174,8 +176,9 @@
                 </table>
                 <button onclick="restartTest()">Ponovni začetek</button>
             `;
-
-            const jsonString = JSON.stringify(results, null, 2);
+            document.body.innerHTML = resultPage;
+            const combinedData = [...userData, ...results];
+            const jsonString = JSON.stringify(combinedData, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
