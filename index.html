@@ -50,7 +50,7 @@
         const correctNumbers = [1, 2, 3, 1, 2, 3, 1, 2, 3];
         let currentSymbolIndex = -1;
         let score = 0;
-        let timeLeft = 10;
+        let timeLeft = 90;
         let timer;
         let error = document.getElementById("error");
         const name = document.querySelector("input[name=ime]");
@@ -159,7 +159,6 @@
                         <th>Pravilno</th>
                         <th>Reakcijski čas (ms)</th>
                     </tr>
-                    ${console.log(results)}
                     ${results.map(result => `
                         <tr>
                             <td>${result.symbol}</td>
@@ -176,7 +175,6 @@
                 </table>
                 <button onclick="restartTest()">Ponovni začetek</button>
             `;
-            document.body.innerHTML = resultPage;
             const combinedData = [...userData, ...results];
             const jsonString = JSON.stringify(combinedData, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
@@ -184,8 +182,9 @@
             a.href = URL.createObjectURL(blob);
             a.download = "rezultati"+"_"+name.value +"_"+lastName.value+"_"+new Date().getDate()+"-"+(new Date().getMonth()+1)+"-"+new Date().getFullYear()+".json";
             a.click();
-
+            
             URL.revokeObjectURL(a.href);
+            document.body.innerHTML = resultPage;
         }
 
         function restartTest() {
