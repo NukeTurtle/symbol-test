@@ -7,13 +7,23 @@
     <title>Test zamenjave simbolov</title>
 </head>
 <body>
-    <h1>Test zamenjave simbolov</h1>
+    <h1>Test zamenjave simbolov</h1>  
     <div id="instructions">
         <form id="userForm">
+            <label for="ime">Ime:</label>
+            <input type="text" name="ime">
+            <label for="priimek">Priimek:</label>
+            <input type="text" name="priimek">
+            <label for="starost">Starost:</label>
+            <input type="number" name="starost" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"
+            maxlength = "3" min="1" max="120">
+            <br><br>
             <p>Navodila: Ujemite simbol s pravilno številko. Imate 90 sekund, da dokončate čim več. Pritisnite ustrezni gumb (1, 2 ali 3), da izberete svoj odgovor.</p>
             <button type="submit">Začni</button>
         </form>
     </div>
+
+    <div id="error" class="incorrect"></div>
 
     <div id="testArea" class="hidden">
         <div class="symbol-stimulus-container">
@@ -42,12 +52,22 @@
         let score = 0;
         let timeLeft = 10;
         let timer;
+        let error = document.getElementById("error");
+        const name = document.querySelector("input[name=ime]");
+        const lastName = document.querySelector("input[name=priimek]");
+        const age = document.querySelector("input[name=starost]");
         let results = [];
         let startTime;
 
         document.getElementById('userForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            startTest();
+            if(name.value != "" && lastName.value != "" && age.value != "") {
+                error.innerText = "";
+                results.push({"ime" : name.value, "priimek" : lastName.value, "starost" : age.value});
+                startTest();
+            } else {
+                error.innerText = "Prosimo vnesite vse podatke."
+            }
         });
 
         function shuffle(array) {
@@ -123,15 +143,6 @@
             nextSymbol();
         }
 
-
-        // document.getElementById('save').onclick = function() {
-        //     let textToSave = JSON.stringify(json),
-        //     filename = 'file.txt',
-        //     blob = new Blob([textToSave], {type: "text/plain;charset=utf-8"});
-
-        //     saveAs(blob, filename);
-        // }
-
         function showResults() {
             const totalCorrect = results.filter(result => result.correct).length;
             const totalWrong = results.length - totalCorrect;
@@ -166,10 +177,9 @@
 
             const jsonString = JSON.stringify(results, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
-
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = '../results.json';
+            a.download = "rezultati"+"_"+name.value +"_"+lastName.value+"_"+new Date().getDate()+"-"+(new Date().getMonth()+1)+"-"+new Date().getFullYear()+".json";
             a.click();
 
             URL.revokeObjectURL(a.href);
